@@ -1,4 +1,4 @@
-# MakeSQL
+# Zeryab DataBase
 
 - This is a README for a npm package that allows developers to create SQL files from JSON, YAML, or XML files. The package takes in a tables.json file that contains information about the database tables and columns. An example of the tables.json file is provided in the README, with tables such as "users" and "reactions" and their respective columns.
 
@@ -15,18 +15,20 @@
 
 - To install, run:
 ```
-npm install makesql
+npm install zeryab-db
 ```
 
 ## Usage
 
 - The package exposes a generateSqlFiles function that takes in two arguments:
 ```
-const { generate } = require('makesql')
+const { SQLConfig, SQLGenerator } = require('zeryab-db');
 
-generate('./tables.json', './relations.json')
-  .then(sql => console.log(sql))
-  .catch(error => console.error(error))
+const $SQLConfig = new SQLConfig('./.config/tables.json', './.config/relations.json');
+const $SQLGenerator = new SQLGenerator();
+const $sqlFiles = $SQLGenerator.generate( $SQLConfig, './tables/' );
+
+console.table($sqlFiles); // will log the names of the generated files
 ```
 
 # Examples
