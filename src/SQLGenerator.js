@@ -22,9 +22,12 @@ class SQLGenerator {
     const generatedFiles = [];
 
     // Generate the SQL code for creating tables
+    let allTablesSQL = '';
+    let allRelationsSQL = '';
+
     for (const table of tables) {
       const tableName = table.name;
-      const sql = this.#generateTable(table);
+      const sql = this.#generateTable(table); allTablesSQL += ' \n' + sql;
       try {
         fs.writeFileSync(`${output}${tableName}.sql`, sql);
         generatedFiles.push(`${tableName}.sql`);
@@ -33,10 +36,17 @@ class SQLGenerator {
       }
     }
 
+    try {
+      fs.writeFileSync(`${output}all_tables.sql`, allTablesSQL);
+      generatedFiles.push(`all_tables.sql`);
+    } catch (error) {
+      console.error("An error occurred: ", error);
+    }
+
     // Generate the SQL code for creating foreign key constraints for relations
     for (const relation of relations) {
       const tableName = relation.table;
-      const sql = this.#generateRelation(relation);
+      const sql = this.#generateRelation(relation); allRelationsSQL += ' \n' + sql;
       try {
         fs.writeFileSync(`${output}${tableName}_fk.sql`, sql);
         generatedFiles.push(`${tableName}_fk.sql`);
@@ -44,6 +54,14 @@ class SQLGenerator {
         console.error("An error occurred: ", error);
       }
     }
+
+    try {
+      fs.writeFileSync(`${output}all_relations.sql`, allRelationsSQL);
+      generatedFiles.push(`all_relations.sql`);
+    } catch (error) {
+      console.error("An error occurred: ", error);
+    }
+
     return generatedFiles;
   }
 
@@ -62,7 +80,7 @@ class SQLGenerator {
     for (const column of columns) {
       const columnName = column.name;
       const columnType = column.type;
-      const primaryKey = column.primary_key ? ' PRIMARY KEY' : '';
+      const primaryKey = column.primaryKey ? ' PRIMARY KEY' : '';
 
       sql += `  \`${columnName}\` ${columnType}${primaryKey},\n`;
     }
@@ -80,17 +98,17 @@ class SQLGenerator {
    * @returns {string} The generated SQL code for creating the foreign key constraints.
    */
   #generateRelation(relation) {
-    const tableName = relation.table;
-    const foreignKeys = relation.foreignKeys;
+    const table = relation.table;
+    const keys = relation.keys;
 
-    let sql = `ALTER TABLE \`${tableName}\`\n`;
+    let sql = `ALTER TABLE \`${table}\`\n`;
 
-    for (const foreignKey of foreignKeys) {
-      const columnName = foreignKey.column;
-      const referenceTable = foreignKey.table;
-      const referenceColumn = foreignKey.referenceColumn || columnName;
+    for (const key of keys) {
+      const tableName = key.table;
+      const columnName = key.column;
+      const keyName = key.name || columnName;
 
-      sql += `  ADD CONSTRAINT \`fk_${tableName}_${referenceTable}\` FOREIGN KEY (\`${columnName}\`) REFERENCES \`${referenceTable}\` (\`${referenceColumn}\`),\n`;
+      sql += `  ADD CONSTRAINT \`fk_${table}_${tableName}_${keyName}\` FOREIGN KEY (\`${keyName}\`) REFERENCES \`${tableName}\` (\`${columnName}\`),\n`;
     }
 
     sql = sql.slice(0, -2);
