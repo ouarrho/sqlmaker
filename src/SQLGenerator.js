@@ -104,11 +104,24 @@ class SQLGenerator {
     let sql = `ALTER TABLE \`${table}\`\n`;
 
     for (const key of keys) {
+      const databaseName = key.database || '';
       const tableName = key.table;
       const columnName = key.column;
       const keyName = key.name || columnName;
 
-      sql += `  ADD CONSTRAINT \`fk_${table}_${tableName}_${keyName}\` FOREIGN KEY (\`${keyName}\`) REFERENCES \`${tableName}\` (\`${columnName}\`),\n`;
+      const constraintName = ( key.constraint !== undefined && key.constraint !== '' ) 
+                              ? `\`${key.constraint}\`` 
+                              : `\`fk_${table}_${tableName}_${keyName}\``;
+
+      const referenceName = ( databaseName !== '' ) 
+                              ? `\`${databaseName}\`.\`${tableName}\`` 
+                              : `\`${tableName}\``;
+
+      const CONSTRAINT = `  ADD CONSTRAINT ${constraintName}`;
+      const FOREIGN_KEY = ` FOREIGN KEY (\`${keyName}\`) `;
+      const REFERENCES = ` REFERENCES ${referenceName} (\`${columnName}\`),\n`;
+
+      sql += CONSTRAINT + FOREIGN_KEY + REFERENCES;
     }
 
     sql = sql.slice(0, -2);
